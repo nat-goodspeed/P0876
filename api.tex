@@ -1,14 +1,14 @@
 \newpage
 \abschnitt{Wording}\label{api}
 
-This wording is relative to N5014.\cite{Standard}
+This wording is relative to N5032.\cite{Standard}
 
 \zs{Append to \stdsection{3.6}{defns.block} as indicated:}
 
 \add{\tsnoten{1 to entry}{Unless stated otherwise, blocking blocks the current
 thread.}}
 
-\zs{Modify \stdsection{4.1.2}{intro.abstract} paragraph 7.3 as indicated:}
+\zs{Modify \stdsection{4.1.2}{intro.abstract} paragraph 8.3 as indicated:}
 
 \begin{description}
     \item[---] The input and output dynamics of interactive devices shall take
@@ -75,8 +75,8 @@ undefined.}
 
 When an exception is thrown, control is transferred to the nearest handler
 with a matching type \xref{except.handle}; ``nearest'' means the handler for
-which the \nt{stmt.block}{compound-statement} or
-\nt{class.base.init}{ctor-initializer} following the \cpp{try} keyword was
+which the \nt{compound-statement}{stmt.block} or
+\nt{ctor-initializer}{class.base.init} following the \cpp{try} keyword was
 most recently entered by the \replace{thread of control}{running fiber} and
 not yet exited.
 
@@ -94,7 +94,7 @@ matching handler continues in a dynamically surrounding try block of the same
 
 \zs{Modify \stdsection{14.4}{except.handle} paragraph 10 as indicated:}
 
-8 The exception with the most recently activated handler
+10 The exception with the most recently activated handler
 \add{in the running fiber ([intro.fibers])} that is still active is called the
 \emph{currently handled exception}.
 
@@ -102,6 +102,11 @@ matching handler continues in a dynamically surrounding try block of the same
 
 The function \stdterm{\cpp{std::uncaught\_exceptions}}{uncaught.exceptions}
 returns the number of uncaught exceptions in the
+\replace{current thread}{running fiber ([intro.fibers])}.
+
+\zs{Modify \stdsection{17.9.6}{uncaught.exceptions} paragraph 1 as indicated:}
+
+1 \emph{Returns:} The number of uncaught exceptions \xref{except.throw} in the
 \replace{current thread}{running fiber ([intro.fibers])}.
 
 \zs{Insert new final subclause in clause 32 \stdclause{thread} as indicated:}
