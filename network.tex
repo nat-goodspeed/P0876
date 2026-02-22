@@ -10,9 +10,11 @@ Therefore the compiler cannot apply HALO optimization to elide the coroutine
 frame for any coroutine in the call chain: the frame for every caller must be
 allocated dynamically.
 
-P4003R0 suggests a special recycling frame allocator which must be
-propagated through the call chain. The recommended approach is to cache a
-pointer to the allocator in \cpp{thread\_local} storage.
+P4003R0 suggests a special recycling frame allocator which must be propagated
+through the call chain. To avoid signature pollution, the allocator is
+retained in the coroutine frame's environment and delivered to child
+coroutines via a \cpp{thread\_local} write-through cache during
+\cpp{operator new}.
 
 Asynchronous I/O using fiber suspension, rather than C++20 coroutine
 suspension, bypasses this allocator question. The memory pool for function
