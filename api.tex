@@ -29,7 +29,7 @@ thread.}}
 \emph{F}, each evaluation that does not occur within \emph{F} but is evaluated on the same
 \replace{thread}{fiber} and as part of the same signal handler (if any) is either sequenced
 before all evaluations that occur within \emph{F} or sequenced after all
-evaluations that occur within \emph{F};\textsuperscript{31} if \emph{F} invokes or resumes
+evaluations that occur within \emph{F};\textsuperscript{30} if \emph{F} invokes or resumes
 a coroutine \xref{expr.await}, only evaluations subsequent to the previous
 suspension (if any) and prior to the next suspension (if any) are considered
 to occur within \emph{F}.
@@ -91,24 +91,29 @@ fiber}. Every thread starts by running a \emph{default fiber}.
 constructor \xref{thread.threads} is the \entryfn of the created thread.
 The \entryfn of a thread is the \entryfn of its default fiber.
 
-4 Constructing an object of type \stdfiber ([fiber.context]) with an \entryfn
-creates an \emph{explicit fiber}. When the \entryfn passed to the constructor
-of \fiber returns, the fiber terminates. The \entryfn for an explicit
-fiber must return a non-empty \fiber object to designate the \emph{successor
-fiber} for the current thread. The \entryfn for a thread need not return
-a \fiber object because the entire thread is terminating.
+4 Constructing an object of type \stdfiber ([fiber.context]) with
+an \entryfn \emph{prepares} an \emph{explicit fiber}, which can consume
+resources. The constructed \fiber object represents the newly prepared fiber.
+\tsnote{A \fiber object can also represent a default fiber.}
 
-5 Member functions of \fiber ([fiber.context.class]) can direct the calling
-thread to \emph{suspend} the running fiber and \emph{resume} a designated
-other fiber. Similarly, returning from the \entryfn for a fiber resumes
-the designated successor fiber. This transition from one fiber to another is
-a \emph{fiber context switch}.
+5 The \emph{successor fiber} of an explicit fiber F is the fiber represented
+by the \fiber object \cpp{fc} returned by F's \entryfn. If \cpp{fc} is
+empty, \termn is called.
+\tsnote{The \entryfn for a default fiber need not return a \fiber object
+because the entire thread is terminating.}
 
-6 Constructing an object of type \fiber with an \entryfn \emph{prepares} a
-fiber, which can consume resources. A fiber can thus be in one of three
-states: prepared, running or suspended.
+6 Member functions of \fiber ([fiber.context.class]) can direct the calling
+thread to \emph{suspend} the running fiber and \emph{resume} \thefiber{\this}.
+Similarly, returning from the \entryfn for a fiber resumes the
+successor fiber. This transition from one fiber to another is a \emph{fiber
+context switch}. A fiber can thus be in one of three states: prepared,
+running, or suspended.
 
-7 When a thread first resumes a prepared fiber, that thread becomes the
+7 An explicit fiber terminates when, after return from its \entryfn, context
+switches to its successor fiber. A default fiber terminates when its thread
+terminates.
+
+8 When a thread first resumes a prepared fiber, that thread becomes the
 fiber's \emph{owning thread.} The owning thread never changes.
 \tsnote{A thread is the owning thread of its default fiber.}
 \tsnote{If a thread resumes a fiber owned by another thread, the behaviour is
@@ -148,24 +153,19 @@ matching handler continues in a dynamically surrounding try block of the same
 \add{in the running fiber ([intro.fibers])} that is still active is called the
 \emph{currently handled exception}.
 
-\zs{Modify the last bullet 1.19 of \stdsection{14.6.2}{except.terminate} as
-indicated:}
+\zs{Modify the last bullet 1.19 of \stdsection{14.6.2}{except.terminate}, and
+append as indicated:}
 
 \begin{description}
     \item[---] when an exception is thrown from a
                coroutine \stdname{std::execution::task}{exec.task} which doesn’t support
                a \cpp{std::execution::set\_error\_t(std::exception\_ptr)}
                completion\replace{.}{, or}
-\end{description}
-
-\zs{Append after bullet 1.19 of \stdsection{14.6.2}{except.terminate}:}
-
-\begin{description}
-    \item[---] when an explicit fiber's \entryfn returns an empty \fiber
-               object ([fiber.context]), or
-    \item[---] when an explicit fiber's \entryfn terminates via an exception, or
-    \item[---] when a non-empty \fiber object is destroyed, or
-    \item[---] when a non-empty \fiber object is the target of an assignment.
+    \item[---] \add{when an explicit fiber's \entryfn returns an empty \fiber
+               object ([fiber.context]), or}
+    \item[---] \add{when an explicit fiber's \entryfn terminates via an exception, or}
+    \item[---] \add{when a non-empty \fiber object is destroyed, or}
+    \item[---] \add{when a non-empty \fiber object is the target of an assignment.}
 \end{description}
 
 \zs{Modify \stdsection{17.9.6}{uncaught.exceptions} paragraph 1 as indicated:}
@@ -245,11 +245,11 @@ represent either an explicit fiber or a default fiber.}
 %% is where unwinding stops.
 
 5 When a running fiber returns a \fiber from its \entryfn, thus resuming the
-designated fiber, the synthesized \fiber passed into the resumed fiber is
+represented fiber, the synthesized \fiber passed into the resumed fiber is
 empty.
 
-6 If a fiber's \entryfn returns an empty \fiber object, \cpp{std::terminate} is called.
-If a fiber's \entryfn exits via an exception, \cpp{std::terminate} is called.
+6 If a fiber's \entryfn returns an empty \fiber object, \termn is called.
+If a fiber's \entryfn exits via an exception, \termn is called.
 
 7 Regardless of the number of \fiber objects in the program, exactly one of them
 represents each prepared or suspended fiber. No \fiber object represents a running fiber.

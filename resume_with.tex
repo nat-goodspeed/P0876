@@ -37,7 +37,7 @@ matters when control leaves it in either of two ways:
         entries in that fiber (such as the first lambda's) as well, back to
         a matching \cpp{catch} clause.\footnote{As stated
         in \nameref{exceptions}, if there is no matching \cpp{catch}
-        clause in that fiber, \cpp{std::terminate()} is called.}
+        clause in that fiber, \termn is called.}
   \item If the function returns, the returned \fiber object is returned by
         the suspended \anyresume call.
 \end{enumerate}

@@ -3,12 +3,28 @@ This document supersedes P0876R24.
 
 \uabschnitt{Changes since P0876R24}
 
+\begin{itemize}
+    \item In Fibers and threads, merge part of paragraph 6 about preparing a
+          fiber into paragraph 4, with which it was somewhat redundant.
+    \item A \fiber object ``represents'' a fiber, rather than ``designating''
+          it. State this in paragraph 4.
+    \item Break out a new paragraph 5 to define successor fiber, and
+          mention \termn. Eliminate ``The \entryfn must return...'' Make the
+          last sentence about a thread's \entryfn a Note.
+    \item Former paragraph 5 (now 6), which defines suspend, gets the rest of
+          former paragraph 6 about the three states of a fiber. Use Oxford comma.
+    \item Introduce new paragraph 7 clarifying explicit fiber termination at
+          context switch -- not at the moment of return from its \entryfn.
+    \item Merge the editing instructions for [except.terminate] bullet list.
+          Make the appended bullet items green.
+\end{itemize}
+
 \uabschnitt{Changes since P0876R23}
 
 \begin{itemize}
     \item Remove Recent WG21 History.
     \item Modify \stdclause{csetjmp.syn} to forbid \cpp{longjmp} across fibers.
-    \item Clarify in front matter that, in addition to calling \cpp{std::terminate}, an
+    \item Clarify in front matter that, in addition to calling \termn, an
           uncaught exception from a fiber may or may not unwind the stack.
     \item Modify \stdclause{intro.execution\#12} to scope sequenced-before and
           sequenced-after rules within fiber.
@@ -236,7 +252,7 @@ This document supersedes P0876R24.
     than ``thread of execution.''
     \item Changed ``thread'' definition to be the execution agent that runs fibers.
     \item Clarified that if a fiber terminates by returning an empty \fiber
-          object, \cpp{std::terminate} is called.
+          object, \termn is called.
     \item Added \cpp{constexpr fiber\_context::current\_exception\_within\_fiber}.
     \item Removed definition of ``function call stack.''
     \item Removed change to definition of expression evaluation conflict.
