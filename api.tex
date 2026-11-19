@@ -85,35 +85,15 @@ instruction pointer, and the invocation sequence \xref{stacktrace.general} of
 functions that have been entered but have not yet returned.}
 
 2 A thread is always executing exactly one fiber, called its \emph{running
-fiber}. Every thread starts by running a \emph{default fiber}.
+fiber}. Every thread starts by running a \emph{default fiber}. A \emph{fiber
+context switch} is when a thread stops executing one fiber to execute another
+fiber instead.
 
 3 The invocable passed to the \cpp{thread} or \cpp{jthread}
 constructor \xref{thread.threads} is the \entryfn of the created thread.
 The \entryfn of a thread is the \entryfn of its default fiber.
 
-4 Constructing an object of type \stdfiber ([fiber.context]) with
-an \entryfn \emph{prepares} an \emph{explicit fiber}, which can consume
-resources. The constructed \fiber object represents the newly prepared fiber.
-\tsnote{A \fiber object can also represent a default fiber.}
-
-5 The \emph{successor fiber} of an explicit fiber F is the fiber represented
-by the \fiber object \cpp{fc} returned by F's \entryfn. If \cpp{fc} is
-empty, \termn is called.
-\tsnote{The \entryfn for a default fiber need not return a \fiber object
-because the entire thread is terminating.}
-
-6 Member functions of \fiber ([fiber.context.class]) can direct the calling
-thread to \emph{suspend} the running fiber and \emph{resume} \thefiber{\this}.
-Similarly, returning from the \entryfn for a fiber resumes the
-successor fiber. This transition from one fiber to another is a \emph{fiber
-context switch}. A fiber can thus be in one of three states: prepared,
-running, or suspended.
-
-7 An explicit fiber terminates when, after return from its \entryfn, context
-switches to its successor fiber. A default fiber terminates when its thread
-terminates.
-
-8 When a thread first resumes a prepared fiber, that thread becomes the
+4 The thread that invokes the \entryfn of a fiber becomes the
 fiber's \emph{owning thread.} The owning thread never changes.
 \tsnote{A thread is the owning thread of its default fiber.}
 \tsnote{If a thread resumes a fiber owned by another thread, the behaviour is
@@ -207,34 +187,49 @@ deallocation function or lock-free atomic modify-write operation \xref{atomics.o
 
 \rSec3[fiber.context.overview]{Overview}
 
-1 A \fiber object is either \emph{empty} or \emph{non-empty}. A
-default-constructed or moved-from \fiber is empty. Otherwise, a \fiber is
-non-empty, and represents either a prepared or a suspended fiber.
+1 Constructing an object of type \fiber with an \entryfn \emph{prepares}
+an \emph{explicit fiber}, which can consume resources. The constructed \fiber
+object represents the newly prepared fiber.
+\tsnote{A \fiber object can also represent a default fiber.}
 
-2 An explicit fiber is prepared by passing an \entryfn to \fiber's
-constructor. At the first call to one of the \anyresume member functions,
-that \entryfn is invoked, and the fiber is running.
-
-3 Every call to one of the \anyresume member functions on an accessible
-non-empty \fiber object performs a fiber context switch:
+2 Invoking one of the \anyresume member functions on a \fiber object:
 \begin{itemize}
-    \item suspends the running fiber, making it the \emph{previous fiber}
-    \item resumes \thisfiber, which was either prepared or suspended, making
+    \item \emph{suspends} the running fiber, making it the \emph{previous fiber}
+    \item \emph{resumes} \thisfiber, which was either prepared or suspended, making
           it the running fiber.
 \end{itemize}
-In addition, returning a non-empty \fiber from a fiber's \entryfn:
+A fiber can thus be in one of three states: prepared, running, or suspended.
+
+3 Returning a \fiber object from an explicit fiber's \entryfn:
 \begin{itemize}
     \item terminates the running fiber
-    \item resumes \thefiber{the returned \fiber}.
+    \item resumes \thefiber{the returned \fiber object}.
 \end{itemize}
+In this case there is no previous fiber.
 
-4 When a prepared fiber is first entered, a synthesized non-empty \fiber
-object representing the previous fiber is passed as a parameter to
-its \entryfn. When a suspended fiber is resumed, a synthesized \fiber object
-representing the previous fiber is returned from the relevant \anyresume
-member function.
-\tsnote{The synthesized \fiber object received in either of those ways might
-represent either an explicit fiber or a default fiber.}
+4 A default fiber terminates when its thread terminates.
+
+5 A \fiber object is either \emph{empty} or \emph{non-empty}. A
+default-constructed or moved-from \fiber is empty. Every non-empty \fiber object
+represents a fiber. Regardless of the number of \fiber objects in the program,
+exactly one of them represents each prepared or suspended fiber. No \fiber
+object represents a running fiber.
+
+6 Invoking one of the \anyresume member functions of a \fiber object
+representing a prepared fiber invokes the fiber's \entryfn, passing as its
+parameter a synthesized \fiber object representing the previous fiber.
+When there is no previous fiber, the synthesized \fiber object is empty.
+
+7 Invoking one of the \anyresume member functions of a \fiber object
+representing a suspended fiber F returns from F's earlier call to \anyresume
+with a synthesized \fiber object representing the previous fiber. When there
+is no previous fiber, the synthesized \fiber object is empty.
+
+8 The \emph{successor fiber} of an explicit fiber F is \thefiber{the \fiber
+object \cpp{fc} returned by F's \entryfn}. If \cpp{fc} is empty, \termn is
+called.
+\tsnote{The \entryfn for a default fiber need not return a \fiber object
+because the entire thread is terminating.}
 
 %% \rSec3[fiber.context.toplevel]{Implicit top-level function}
 
@@ -244,17 +239,9 @@ represent either an explicit fiber or a default fiber.}
 %% unwound, this conceptual top-level stack frame serves as delimiter: this point
 %% is where unwinding stops.
 
-5 When a running fiber returns a \fiber from its \entryfn, thus resuming the
-represented fiber, the synthesized \fiber passed into the resumed fiber is
-empty.
+9 If a fiber's \entryfn exits via an exception, \termn is called.
 
-6 If a fiber's \entryfn returns an empty \fiber object, \termn is called.
-If a fiber's \entryfn exits via an exception, \termn is called.
-
-7 Regardless of the number of \fiber objects in the program, exactly one of them
-represents each prepared or suspended fiber. No \fiber object represents a running fiber.
-
-8 A \fiber object can optionally be constructed by passing an explicit
+10 A \fiber object can optionally be constructed by passing an explicit
 \cpp{span<byte>} in which to track the fiber's
 \stdterm{invocation sequence}{stacktrace.general}. If at any time during the
 life of a fiber the data storage required to track its invocation sequence
@@ -453,31 +440,32 @@ Within [fiber.context.mem], for exposition only:
           subsequent fiber context switch back to suspended fiber A.
           When \resumewith returns, the previous fiber is B.
           \tsnote{B can be other than the target fiber.}
-    \item Let \cpp{previous} be the synthesized \fiber object representing B.
 \end{itemize}
 
-A fiber context switch to the target fiber requires the following steps:
+At entry to \resumewith, the target fiber can either be in the prepared state
+or in the suspended state.
+
+For exposition, resuming a fiber F requires the following steps:
 
 \begin{enumerate}
-    \item suspend the running fiber
-    \item direct the current thread to make the target fiber \emph{current}:
-          this is referred to as \emph{fiber-activation} of the target fiber
-    \item execute \emph{internal-resume} on the target fiber (see below).
+    \item synthesize a \fiber object \cpp{previous} representing the running fiber
+    \item remember F's state (prepared vs. suspended) as \emph{from-state}
+    \item fiber context switch to F
+    \item execute \emph{internal-resume(from-state, \cpp{previous})} on F (see below).
 \end{enumerate}
 
-At entry to \resumewith, the target fiber can either be in the prepared state
-(not yet entered) or in the suspended state (waiting to return from \resumewith).
-
-Let \emph{internal-resume(\cpp{before})}, where \cpp{before} is a \fiber
-object, denote the following sequence of steps in order.
-\tsnote{\emph{internal-resume} is executed after \emph{fiber-activation}
-of the target fiber.}
+Let \emph{internal-resume(from-state, \cpp{before})}, where \emph{from-state}
+is a flag indicating whether the running fiber was previously prepared or
+suspended, and \cpp{before} is a \fiber object, denote the following sequence
+of steps in order.
+Because \emph{internal-resume} is executed after fiber context switch, the
+running fiber is the fiber to be resumed.
 
 \begin{description}
     \item[---]
-        If the new current fiber was suspended, that implies that at some
-        earlier time, it called \resumewith on some non-empty \fiber
-        object \cpp{other}. In that case:
+        If \emph{from-state} was suspended, that implies that at some
+        earlier time, the running fiber called \resumewith on some
+        non-empty \fiber object \cpp{other}. In that case:
         \begin{itemize}
             \item Return \cpp{before} from the call to \resumewith on \cpp{other}.
         \end{itemize}   
@@ -487,15 +475,16 @@ of the target fiber.}
                   \cpp{invoke(entry\_copy, std::move(before))}
                   and let \cpp{successor} be the resulting \fiber object
             \item destroy \cpp{entry\_copy}; invoke \termn if \cpp{successor} is empty
+            \item remember \cpp{successor}'s state as \emph{from-state}
             \item terminate the running fiber
-            \item perform \emph{fiber-activation} of \thefiber{\cpp{successor}}
+            \item fiber context switch to \thefiber{\cpp{successor}}
             \item reclaim implementation-provided resources
             \item if \cpp{stack\_copy} and \cpp{deleter\_copy} exist:
                 \begin{itemize}
                     \item evaluate \cpp{invoke(deleter\_copy, stack\_copy)}
                     \item destroy \cpp{deleter\_copy}
                 \end{itemize}
-            \item execute \emph{internal-resume(\cpp{fiber\_context()})}.
+            \item execute \emph{internal-resume(from-state, \cpp{fiber\_context()})}.
         \end{itemize}
 
         If \cpp{successor} is empty, it is implementation-defined
