@@ -438,11 +438,12 @@ If \cpp{empty()} is \false, \cpp{terminate} is invoked \xref{except.terminate}.
 %-------------------------------- resume_with --------------------------------
 \mbrhdr{template<class Fn> fiber\_context resume\_with(Fn\&\& fn) \&\&}
 
+Invoking \resumewith performs a fiber context switch.
+
 The operation of \resumewith involves at least two and possibly three fibers.
 Within [fiber.context.mem], for exposition only:
 
 \begin{itemize}
-    \item Invoking \resumewith performs a fiber context switch.
     \item The \emph{calling fiber} is the fiber invoking \resumewith.
     \item The \emph{target fiber} is \thefiber{\state}.
     \item \resumewith synthesizes a \fiber object representing the calling
@@ -469,14 +470,14 @@ At entry to \resumewith, the target fiber can either be in the prepared state
 
 Let \emph{internal-resume(\cpp{before})}, where \cpp{before} is a \fiber
 object, denote the following sequence of steps in order.
-\tsnote{\emph{internal-resume} is executed after performing \emph{fiber-activation}
+\tsnote{\emph{internal-resume} is executed after \emph{fiber-activation}
 of the target fiber.}
 
 \begin{description}
     \item[---]
-          If the new current fiber was suspended, that implies that at some earlier
-          time, it called \resumewith on some
-          non-empty \fiber object \cpp{other}. In that case:
+        If the new current fiber was suspended, that implies that at some
+        earlier time, it called \resumewith on some non-empty \fiber
+        object \cpp{other}. In that case:
         \begin{itemize}
             \item Return \cpp{before} from the call to \resumewith on \cpp{other}.
         \end{itemize}   
@@ -484,18 +485,24 @@ of the target fiber.}
         \begin{itemize}
             \item Evaluate
                   \cpp{invoke(entry\_copy, std::move(before))}
-                  and let \cpp{successor} be the resulting \fiber
-            \item destroy \cpp{entry\_copy}
+                  and let \cpp{successor} be the resulting \fiber object
+            \item destroy \cpp{entry\_copy}; invoke \termn if \cpp{successor} is empty
+            \item terminate the running fiber
+            \item perform \emph{fiber-activation} of \thefiber{\cpp{successor}}
+            \item reclaim implementation-provided resources
             \item if \cpp{stack\_copy} and \cpp{deleter\_copy} exist:
                 \begin{itemize}
                     \item evaluate \cpp{invoke(deleter\_copy, stack\_copy)}
                     \item destroy \cpp{deleter\_copy}
                 \end{itemize}
-            \item exit the running fiber
-            \item reclaim implementation-provided resources
-            \item perform \emph{fiber-activation} of \thefiber{\cpp{successor}}
             \item execute \emph{internal-resume(\cpp{fiber\_context()})}.
         \end{itemize}
+
+        If \cpp{successor} is empty, it is implementation-defined
+        whether \termn is called before \cpp{entry\_copy} is destroyed.
+
+        \tsnote{\cpp{deleter\_copy} may enqueue the memory referenced
+        by \cpp{stack\_copy} for subsequent deletion.}
 \end{description}
 
 1 \mandates

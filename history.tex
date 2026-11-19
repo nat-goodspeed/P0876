@@ -17,6 +17,17 @@ This document supersedes P0876R24.
           context switch -- not at the moment of return from its \entryfn.
     \item Merge the editing instructions for [except.terminate] bullet list.
           Make the appended bullet items green.
+    \item Move the bullet explaining the purpose of \resumewith to the top of
+          its text.
+    \item Reorder \resumewith's \emph{internal-resume} steps to clarify that
+          fiber resource reclamation, including invocation
+          of \cpp{deleter\_copy}, runs on the successor fiber, and to eliminate
+          a limbo step between exiting the running fiber
+          and \emph{fiber-activation} of the successor fiber.
+    \item Specify that it is implementation-defined whether returning an
+          empty \fiber object from a fiber's \entryfn invokes \termn before
+          destroying \cpp{entry\_copy}.
+    \item Add a Note that \cpp{deleter\_copy} may enqueue for deferred deletion.
 \end{itemize}
 
 \uabschnitt{Changes since P0876R23}
