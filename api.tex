@@ -86,8 +86,8 @@ functions that have been entered but have not yet returned.}
 
 2 A thread is always executing exactly one fiber, called its \emph{running
 fiber}. Every thread starts by running a \emph{default fiber}. A \emph{fiber
-context switch} is when a thread stops executing one fiber to execute another
-fiber instead.
+context switch} occurs when a thread stops executing one fiber to execute another
+fiber instead. ([fiber.context])
 
 3 The invocable passed to the \cpp{thread} or \cpp{jthread}
 constructor \xref{thread.threads} is the \entryfn of the created thread.
@@ -95,8 +95,8 @@ The \entryfn of a thread is the \entryfn of its default fiber.
 
 4 The \emph{owning thread} of a fiber is the thread that first executes that
 fiber. The owning thread never changes.
-\tsnote{If a thread resumes a fiber owned by another thread, the behaviour is
-undefined ([fiber.context.mem]).}
+If a thread executes a fiber owned by another thread, the behaviour is
+undefined.
 \cbend
 
 \zs{Modify \stdsection{14.2}{except.throw} paragraph 2 as indicated:}
@@ -143,8 +143,8 @@ append as indicated:}
     \item[---] \add{when an explicit fiber's \entryfn returns an empty \fiber
                object ([fiber.context]), or}
     \item[---] \add{when an explicit fiber's \entryfn terminates via an exception, or}
-    \item[---] \add{when a non-empty \fiber object is destroyed, or}
-    \item[---] \add{when a non-empty \fiber object is the target of an assignment.}
+    \item[---] \add{when the destructor or the move assignment operator is
+               invoked on a non-empty object of type \fiber.}
 \end{description}
 
 \zs{Modify \stdsection{17.9.6}{uncaught.exceptions} paragraph 1 as indicated:}
