@@ -486,7 +486,12 @@ two other fibers. Within [fiber.context.mem], for exposition only:
 and \cpp{invoke\_result\_t<decay\_t<Fn>, fiber\_context\&\&>\&\&} denotes \fiber\cpp{\&\&}.
 
 2 \precond
-\cpp{can\_resume()} is \true.
+
+\begin{description}
+    \item[---] \cpp{empty()} is \false
+    \item[---] \thisfiber is in the prepared state (has no owning thread),
+               or \currthread is \ownthread.
+\end{description}
 
 3 \effects
 \begin{description}
@@ -548,9 +553,13 @@ Equivalent to:\\
 \begin{description}
     \item[---] \false if \cpp{empty()} is \true
     \item[---] \true if \thisfiber is in the prepared state (has no owning thread)
-    \item[---] \true if \currthread is \ownthread
-    \item[---] \false otherwise.
+    \item[---] \false if \currthread is detectably not \ownthread
+    \item[---] \true otherwise.
 \end{description}
+
+\tsnote{Because \stdname{std::thread::id}{thread.thread.id} values may be
+reused, \canresume might be unable to reliably detect that \currthread is
+not \ownthread.}
 
 %----------------------------------- empty -----------------------------------
 \mbrhdr{bool empty() const noexcept}
