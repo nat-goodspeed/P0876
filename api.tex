@@ -300,8 +300,8 @@ exceeds the \cpp{size} of that \cpp{span<byte>}, the behaviour is undefined.
     \item[---] Let \cpp{entry\_copy} be an object of
                type \cpp{decay\_t<F>} direct-non-list-initialized
                with \cpp{std::forward<F>(entry)}. 
-    \item[---] Initializes \cpp{state} to prepare a fiber that will, when
-               first resumed, invoke \cpp{entry\_copy}.
+    \item[---] Initializes \cpp{state} to prepare a fiber that will (barring
+               exceptional conditions), when first resumed, invoke \cpp{entry\_copy}.
                \tsnote{\cpp{entry\_copy} is not a member of \fiber because it
                is destroyed on fiber termination, not when a \fiber object is
                destroyed. Storage for \cpp{entry\_copy} is associated
@@ -358,8 +358,8 @@ exceeds the \cpp{size} of that \cpp{span<byte>}, the behaviour is undefined.
     \item[---] Let \cpp{deleter\_copy} be an object of
                type \cpp{decay\_t<D>} direct-non-list-initialized
                with \cpp{std::forward<F>(deleter)}. 
-    \item[---] Initializes \cpp{state} to prepare a fiber that will, when
-               first resumed, invoke \cpp{entry\_copy}.
+    \item[---] Initializes \cpp{state} to prepare a fiber that will (barring
+               exceptional conditions), when first resumed, invoke \cpp{entry\_copy}.
                \tsnote{\cpp{entry\_copy}, \cpp{stack\_copy} and
                \cpp{deleter\_copy} are not members of \fiber because they 
                are destroyed on fiber termination, not when a \fiber object is
