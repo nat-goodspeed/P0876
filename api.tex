@@ -93,9 +93,8 @@ fiber instead.
 constructor \xref{thread.threads} is the \entryfn of the created thread.
 The \entryfn of a thread is the \entryfn of its default fiber.
 
-4 The thread that invokes the \entryfn of a fiber becomes the
-fiber's \emph{owning thread.} The owning thread never changes.
-\tsnote{A thread is the owning thread of its default fiber.}
+4 The \emph{owning thread} of a fiber is the thread that first executes that
+fiber. The owning thread never changes.
 \tsnote{If a thread resumes a fiber owned by another thread, the behaviour is
 undefined ([fiber.context.mem]).}
 \cbend
@@ -416,7 +415,7 @@ If \cpp{empty()} is \false, \cpp{terminate} is invoked \xref{except.terminate}.
 
 Invoking \resumewith performs a fiber context switch.
 
-For exposition only, resuming a fiber F requires the following steps:
+For exposition only, resuming a fiber F involves the following steps:
 
 \begin{enumerate}
     \item synthesize a \fiber object \cpp{before} representing the running fiber
@@ -472,7 +471,7 @@ Within [fiber.context.mem], for exposition only:
     \item The \emph{calling fiber} is the fiber invoking \resumewith.
     \item The \emph{target fiber} is \thefiber{\state}.
     \item Because \resumewith suspends the calling fiber A, returning
-          from \resumewith necessarily requires some other fiber B to perform a
+          from \resumewith implies some other fiber B performed a
           subsequent fiber context switch back to suspended fiber A.
           When \resumewith returns, the previous fiber is B.
           \tsnote{B can be other than the target fiber.}
@@ -492,7 +491,6 @@ and \cpp{invoke\_result\_t<decay\_t<Fn>, fiber\_context\&\&>\&\&} denotes \fiber
 \begin{description}
     \item[---] Resets \state so that \cpp{empty()} is \true.
     \item[---] Synthesizes a \fiber object \cpp{caller} representing the running fiber.
-    \item[---] Associates the current thread as the target fiber's owning thread.
     \item[---] Remembers the target fiber's state as \emph{from-state}.
     \item[---] Performs fiber context switch to the target fiber.
     \item[---] Evaluates \cpp{invoke(std::forward<Fn>(fn), std::move(caller))}.
