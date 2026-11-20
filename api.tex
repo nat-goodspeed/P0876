@@ -227,7 +227,8 @@ because the entire thread is terminating.}
 %% unwound, this conceptual top-level stack frame serves as delimiter: this point
 %% is where unwinding stops.
 
-7 If a fiber's \entryfn exits via an exception, \termn is called.
+\tsnote{If a fiber's \entryfn exits via an exception, \termn is
+called \xref{except.handle}.}
 
 8 A \fiber object can optionally be constructed by passing an explicit
 \cpp{span<byte>} in which to track the fiber's
@@ -445,7 +446,7 @@ fiber to be resumed is already the running fiber.
                   \cpp{invoke(entry\_copy, std::move(before))}
                   and let \cpp{successor} be the resulting \fiber object
             \item destroy \cpp{entry\_copy}; invoke \termn if \cpp{successor} is empty
-            \item remember \cpp{successor}'s state as \emph{from-state}
+            \item remember \cpp{successor}'s state as \emph{successor-state}
             \item terminate the running fiber
             \item fiber context switch to \thefiber{\cpp{successor}}
             \item reclaim implementation-provided resources
@@ -454,7 +455,7 @@ fiber to be resumed is already the running fiber.
                     \item evaluate \cpp{invoke(deleter\_copy, stack\_copy)}
                     \item destroy \cpp{deleter\_copy}
                 \end{itemize}
-            \item execute \emph{internal-resume(from-state, \cpp{fiber\_context()})}.
+            \item execute \emph{internal-resume(successor-state, \cpp{fiber\_context()})}.
         \end{itemize}
 
         If \cpp{successor} is empty, it is implementation-defined
@@ -464,8 +465,8 @@ fiber to be resumed is already the running fiber.
         by \cpp{stack\_copy} for subsequent deletion.}
 \end{description}
 
-The operation of \resumewith involves at least two and possibly three fibers.
-Within [fiber.context.mem], for exposition only:
+A fiber invoking \resumewith interacts directly with at least one and possibly
+two other fibers. Within [fiber.context.mem], for exposition only:
 
 \begin{itemize}
     \item The \emph{calling fiber} is the fiber invoking \resumewith.
